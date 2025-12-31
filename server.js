@@ -3,6 +3,7 @@
 // connects to the database, registers middleware and routes, and starts the server.
 
 const express = require('express');
+const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
@@ -16,6 +17,7 @@ connectDB();
 const app = express();
 
 // Built-in middleware to parse JSON bodies
+app.use(cors());
 app.use(express.json());
 
 // Routes
