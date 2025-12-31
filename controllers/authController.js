@@ -46,9 +46,9 @@ exports.register = async (req, res) => {
     console.error('Register error:', error);
     // Handle duplicate key error
     if (error.code === 11000) {
-      return res.status(400).json({ error: 'Email already in use.' });
+      return res.status(400).json({ error: 'Email already in use.', message: error.message });
     }
-    return res.status(500).json({ error: 'Server error during registration.' });
+    return res.status(500).json({ error: 'Server error during registration.', message: error.message });
   }
 };
 
