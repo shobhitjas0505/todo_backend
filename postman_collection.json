@@ -1,0 +1,312 @@
+{
+    "info": {
+        "name": "ToDo Backend Collection",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "Collection to test the To-Do backend (Node.js, Express, MongoDB, JWT). Uses environment variables: baseUrl, jwtToken, todoId, userId."
+    },
+    "item": [
+        {
+            "name": "Auth",
+            "description": "Authentication endpoints",
+            "item": [
+                {
+                    "name": "Register",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "description": "Register a new user. Returns a success message. Example request body included."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Status is 201 or 400 (if user exists)\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([201,400]);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 201) {",
+                                    "    pm.test(\"Registration successful message present\", function () {",
+                                    "        var json = pm.response.json();",
+                                    "        pm.expect(json).to.have.property('message');",
+                                    "    });",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Login a user. Saves returned token and user id into environment variables (jwtToken, userId)."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Login status 200\", function () {",
+                                    "    pm.response.to.have.status(200);",
+                                    "});",
+                                    "",
+                                    "try {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.token) {",
+                                    "        // Store the JWT token in environment for subsequent requests",
+                                    "        pm.environment.set(\"jwtToken\", json.token);",
+                                    "    }",
+                                    "    if (json.user && json.user.id) {",
+                                    "        pm.environment.set(\"userId\", json.user.id);",
+                                    "    }",
+                                    "} catch (e) {",
+                                    "    // ignore parse errors",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Todos",
+            "description": "Protected Todo endpoints (require Authorization: Bearer {{jwtToken}})",
+            "item": [
+                {
+                    "name": "Create Todo",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Learn Node.js\",\n  \"description\": \"Practice backend daily\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/todos",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "todos"
+                            ]
+                        },
+                        "description": "Create a new todo for the logged-in user. On success saves the returned todo id to environment.todoId."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Create Todo - status 201\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([201,200]);",
+                                    "});",
+                                    "",
+                                    "try {",
+                                    "    var json = pm.response.json();",
+                                    "    if (json.todo && json.todo._id) {",
+                                    "        pm.environment.set('todoId', json.todo._id);",
+                                    "    }",
+                                    "} catch (e) {",
+                                    "    // ignore json parse errors",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Todos",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/todos",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "todos"
+                            ]
+                        },
+                        "description": "Get all todos for the logged-in user."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Get Todos - status 200\", function () {",
+                                    "    pm.expect(pm.response.code).to.eql(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Response has todos array\", function () {",
+                                    "    var json = pm.response.json();",
+                                    "    pm.expect(json).to.have.property('todos');",
+                                    "    pm.expect(Array.isArray(json.todos)).to.be.true;",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Update Todo",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated title\",\n  \"completed\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/todos/{{todoId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "todos",
+                                "{{todoId}}"
+                            ]
+                        },
+                        "description": "Update the todo with id stored in environment.todoId. Ensure todoId is set (from Create Todo) or replace path param manually."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Update Todo - status 200 or 403/404 if not found/authorized\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200,403,404]);",
+                                    "});"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete Todo",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwtToken}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/todos/{{todoId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "todos",
+                                "{{todoId}}"
+                            ]
+                        },
+                        "description": "Delete the todo with id stored in environment.todoId."
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "pm.test(\"Delete Todo - status 200 or 403/404 if not found/authorized\", function () {",
+                                    "    pm.expect(pm.response.code).to.be.oneOf([200,403,404]);",
+                                    "});",
+                                    "",
+                                    "// Clear the todoId on successful delete (status 200)",
+                                    "if (pm.response.code === 200) {",
+                                    "    pm.environment.unset('todoId');",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": []
+}
